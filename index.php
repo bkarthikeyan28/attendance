@@ -1,3 +1,11 @@
+<?php
+  session_start();
+  if(isset($_SESSION['staff_id'])) {
+    header('Location: '.'staff.php');
+  } else if(isset($_SESSION['student_id'])) {
+    header('Location: '.'student.php');
+  }
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,17 +24,19 @@
   </head>
 
   <body>
-
     <div class="container">
-      <form class="form-signin" action = "validate.php" method = "post">
+      <form class="form-signin" action = "staff.php" method = "post">
         <h2 class="form-signin-heading">Please sign in</h2>
-        <label for="inputEmail" class="sr-only">Email address</label>
-        <input type="email" name = "email" id="email" class="form-control" placeholder="Email address" required autofocus>
+        <label for="inputEmail" class="sr-only">Staff Id</label>
+        <input type="text" name = "staff_id" id="staff_id" class="form-control" placeholder="User Id" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
         <input type="password" name = "password" id="password" class="form-control" placeholder="Password" required>
-        <div class="checkbox">
+        <div class="checkbox"> Sign in as: 
           <label>
-            <input type="checkbox" name = "temp" value="remember"> Remember Me
+            <input type="checkbox" name = "whose" value="student">Student
+          </label>
+          <label>
+            <input type="checkbox" name = "whose" value="staff">Staff
           </label>
         </div>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>

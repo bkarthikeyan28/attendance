@@ -1,21 +1,50 @@
 <?php
-  /*include ('connection.php');
-  if(isset($_GET['staff_id'])) {
-    $id = mysqli_real_escape_string($_POST['staff_id']);
-    $pass = mysqli_real_escape_string($_POST['pass'])
-    $sql = "SELECT staff_name FROM staff WHERE staff = '$id' AND pass = MD5('$pass')";
-    $result = $connection -> query($sql);
-    if($result -> num_rows == 1) {
-      $f = 1;
-      $_SESSION['staff_id'] = $id;
-      session_start();
-    } else {
-      $f = 0;
-    }
+  include ('connection.php');
+  ini_set('error_reporting', E_ALL);
+  error_reporting(E_ALL);
+  session_start();
+  if(!isset($_POST['whose'])) {
+    if(!isset($_SESSION['staff_id']))
+      header('Location: '.'index.php');
   }
-  if(!isset($_SESSION['staff_id'])) {
+  if(isset($_POST['staff_id'])) {
+    if($_POST['whose'] == 'staff') {
+      $id = $_POST['staff_id'];
+      $pass = $_POST['password'];
+      $sql = "SELECT staff_name FROM staff WHERE staff_id = '$id' AND pass = MD5('$pass')";
+      $result = $connection -> query($sql);
+      if($result -> num_rows == 1) {
+        while($data = $result -> fetch_assoc()) {
+          $name = $data['staff_name'];
+        }
+        $f = 1;
+        $_SESSION['staff_id'] = $id;
+        $_SESSION['staff_name'] = $name;
+      } else {
+        header('Location: '.'index.php');
+      }
+    } else {
+      $id = $_POST['staff_id'];
+      $pass = $_POST['password'];
+      echo $id;
+      echo $pass;
+      $sql = "SELECT student_name FROM student WHERE student_id = '$id' AND pass = MD5('$pass')";
+      $result = $connection -> query($sql);
+      if($result -> num_rows == 1) {
+        while($data = $result -> fetch_assoc()) {
+          $name = $data['student_name'];
+        }
+        $f = 1;
+        $_SESSION['student_id'] = $id;
+        $_SESSION['student_name'] = $name;
+        header('Location: '.'student.php');
+      } else {
+        header('Location: '.'index.php');
+      }
+    }
+  } else if(!isset($_SESSION['staff_id'])) {
     header('Location: '.'index.php');
-  }*/
+  }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +64,22 @@
     <link href="theme.css" rel="stylesheet">
 
   </head>
+  <script type="text/javascript">
+  function sub() {
+    if($('#course_code').val() == '') {
+      $('#error_update').show();
+    } else {
+      $('#change').submit(function(event) {
+        $('#success_update').show();
+        $('#error_update').hide();
+        alert("Form Submitted");
+        return true;
+      });
+      $('#change').submit();
+    }
+  }
 
+  </script>
   <body role="document">
 
     <!-- Fixed navbar -->
@@ -53,8 +97,8 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">View</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="view.php">View</a></li>
+            <li><a href = "logout.php">Logout</a></li>
             </li>
           </ul>
         </div><!--/.nav-collapse -->
@@ -65,8 +109,7 @@
 
       <!-- Main jumbotron for a primary marketing message or call to action -->
       <div class="jumbotron">
-        <h1>Welcome User</h1>
-        <p>Add something here</p>
+        <h1>Welcome <?php echo $_SESSION['staff_name']; ?></h1>
       </div>
 
 
@@ -75,7 +118,7 @@
       </div>
 
       <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Update" data-whatever="C1">Update attendance</button><br><br>
-      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Check" data-whatever="C1">Check attendance</button><br><br>
+      <button type="button" class="btn btn-primary" onclick = "document.location = 'view.php';">Check attendance</button><br><br>
 
 
       <div class="modal fade" id="Update" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -86,24 +129,34 @@
               <h4 class="modal-title" id="exampleModalLabel">Update Attendance</h4>
             </div>
             <div class="modal-body">
-              <form>
+              <div class="alert alert-success" id = "success_update" role="alert" style = 'display:none;'>
+                <strong>Everything OK.Please wait while updating ....</strong>.
+              </div>
+              <div class="alert alert-danger" id = "error_update" role="alert" style = 'display:none;'>
+                <strong>Please recheck whether you have entered everything</strong>.
+              </div>
+              <form id = "change" action = "update.php", method = "post">
                 <div class="form-group">
                   <label for="recipient-name" class="control-label">Course Code: </label>
-                  <input type="text" class="form-control" name = "course_code" id="course_code">
+                  <input type="text" class="form-control" name = "course_code" id="course_code" required>
+                </div>
+                <div class="form-group">
+                  <label for="recipient-name" class="control-label">Date: </label>
+                  <input type="date" class="form-control" name = "date_added" id="date_added" required>
                 </div>
                 <div class="form-group">
                   <label for="recipient-name" class="control-label">No of classes: </label>
-                  <input type="text" class="form-control" name = "no_of_classes" id="no_of_classes">
+                  <input type="text" class="form-control" name = "no_of_classes" id="no_of_classes" required>
                 </div>
                 <div class="form-group">
                   <label for="message-text" class="control-label">Absentees(Seperated by Commas): </label>
-                  <textarea class="form-control" name = "absentees" id="absentees"></textarea>
+                  <textarea class="form-control" name = "absentees" id="absentees" required></textarea>
                 </div>
               </form>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Update</button>
+              <button type="button" class="btn btn-primary" onclick="sub(); return true;">Update</button>
             </div>
           </div>
         </div>
@@ -143,127 +196,31 @@
               <tr>
                 <th>#</th>
                 <th>Course Code</th>
-                <th>Total No. of Classes</th>
                 <th>Last Updated</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td>Mark</td>
-                <td>Otto</td>
-                <td>@mdo</td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td>Jacob</td>
-                <td>Thornton</td>
-                <td>@fat</td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td>Larry</td>
-                <td>the Bird</td>
-                <td>@twitter</td>
-              </tr>
+              <?php
+                $id = $_SESSION['staff_id'];
+                $sql = "SELECT * FROM connector WHERE staff_id = '$id'";
+                $result = $connection -> query($sql);
+                $i = 1;
+                while($row = $result -> fetch_assoc()) {
+                  $course = $row['course_id'];
+                  $last = $row['last_updated'];
+                  echo "<tr>";
+                  echo "<td>$i</td>";
+                  echo "<td>$course</td>";
+                  echo "<td>$last</td>";
+                  echo "</tr>";
+                  $i++;
+                }
+              ?>
             </tbody>
           </table>
         </div>
       </div>
-
-     
-
-
-      <div class="page-header">
-        <h1>Labels</h1>
-      </div>
-      <h1>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h1>
-      <h2>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h2>
-      <h3>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h3>
-      <h4>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h4>
-      <h5>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h5>
-      <h6>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </h6>
-      <p>
-        <span class="label label-default">Default</span>
-        <span class="label label-primary">Primary</span>
-        <span class="label label-success">Success</span>
-        <span class="label label-info">Info</span>
-        <span class="label label-warning">Warning</span>
-        <span class="label label-danger">Danger</span>
-      </p>
-
-
-      
-
-
-      <div class="page-header">
-        <h1>Alerts</h1>
-      </div>
-      <div class="alert alert-success" role="alert">
-        <strong>Well done!</strong> You successfully read this important alert message.
-      </div>
-      <div class="alert alert-info" role="alert">
-        <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-      </div>
-      <div class="alert alert-warning" role="alert">
-        <strong>Warning!</strong> Best check yo self, you're not looking too good.
-      </div>
-      <div class="alert alert-danger" role="alert">
-        <strong>Oh snap!</strong> Change a few things up and try submitting again.
-      </div>
-
-
-
-    </div> <!-- /container -->
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
     <script src="../../dist/js/jquery.js"></script>
     <script src="../../dist/js/bootstrap.min.js"></script>
-    <script src="../../assets/js/docs.min.js"></script>
   </body>
 </html>
